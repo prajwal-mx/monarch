@@ -24,6 +24,8 @@ MONARCH_SDD*.md
 ORIGINAL_REQUEST.md
 PROJECT_TRACKER.md
 generate_deck.py
+pdf images/
+pdf_images/
 
 # OS / Editor files
 .DS_Store
