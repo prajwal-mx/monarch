@@ -1,0 +1,2751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MONARCH — Supply Chain Risk Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="/static/cytoscape.min.js"></script>
+  <style>
+    :root {
+      --bg-canvas: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --border-color: #e2e8f0;
+      --border-focus: #94a3b8;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      
+      --accent-primary: #0f172a;
+      --accent-hover: #1e293b;
+      --accent-blue: #2563eb;
+      --accent-blue-subtle: #eff6ff;
+      
+      --color-pass-text: #047857;
+      --color-pass-bg: #ecfdf5;
+      --color-pass-border: #a7f3d0;
+      
+      --color-warn-text: #b45309;
+      --color-warn-bg: #fffbeb;
+      --color-warn-border: #fde68a;
+      
+      --color-block-text: #b91c1c;
+      --color-block-bg: #fef2f2;
+      --color-block-border: #fecaca;
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navigation Bar */
+    header.top-header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      background: var(--text-primary);
+      color: #ffffff;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: -0.05em;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-pill {
+      font-size: 0.6875rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    /* Sub-nav Tabs */
+    .tabs-nav {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 0.75rem 0.25rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover { color: var(--text-primary); }
+
+    .tab-btn.active {
+      color: var(--accent-blue);
+      border-bottom-color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    .tab-badge {
+      font-size: 0.6875rem;
+      padding: 0.1rem 0.35rem;
+      border-radius: 9999px;
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+    }
+
+    .tab-btn.active .tab-badge {
+      background: var(--accent-blue-subtle);
+      color: var(--accent-blue);
+    }
+
+    /* Content Area */
+    main.content-area {
+      max-width: 1440px;
+      margin: 1.5rem auto 3rem;
+      padding: 0 1.5rem;
+    }
+
+    .view-container { display: none; }
+    .view-container.active { display: block; }
+
+    /* Stat Cards & Grid */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .stat-value {
+      font-size: 1.625rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-surface);
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 0.1rem;
+    }
+
+    .card-body {
+      padding: 1.25rem;
+    }
+
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.8125rem;
+    }
+
+    table.data-table th {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+      text-transform: uppercase;
+      font-size: 0.6875rem;
+      letter-spacing: 0.05em;
+    }
+
+    table.data-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    table.data-table tr:last-child td { border-bottom: none; }
+    table.data-table tr:hover td { background-color: #f8fafc; }
+
+    /* Badges & Status */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+      line-height: 1.2;
+    }
+
+    .badge-pass { background: var(--color-pass-bg); color: var(--color-pass-text); border: 1px solid var(--color-pass-border); }
+    .badge-warn { background: var(--color-warn-bg); color: var(--color-warn-text); border: 1px solid var(--color-warn-border); }
+    .badge-block { background: var(--color-block-bg); color: var(--color-block-text); border: 1px solid var(--color-block-border); }
+    .badge-neutral { background: var(--bg-subtle); color: var(--text-secondary); border: 1px solid var(--border-color); }
+
+    /* Score Meter Bar */
+    .score-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .score-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-subtle);
+      border-radius: 9999px;
+      overflow: hidden;
+      min-width: 48px;
+    }
+    .score-fill {
+      height: 100%;
+      border-radius: 9999px;
+    }
+    .score-fill-low { background: #10b981; }
+    .score-fill-med { background: #f59e0b; }
+    .score-fill-high { background: #dc2626; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      font-family: var(--font-sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--bg-subtle); border-color: var(--border-focus); }
+    
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #ffffff;
+      border-color: var(--accent-primary);
+    }
+    .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+
+    .btn-blue {
+      background: var(--accent-blue);
+      color: #ffffff;
+      border-color: var(--accent-blue);
+    }
+    .btn-blue:hover { background: #1d4ed8; }
+
+    .btn-red {
+      background: #dc2626;
+      color: #ffffff;
+      border-color: #dc2626;
+    }
+    .btn-red:hover { background: #b91c1c; }
+
+    /* Inputs */
+    .input-text, select.input-select {
+      width: 100%;
+      padding: 0.45rem 0.75rem;
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      outline: none;
+    }
+    .input-text:focus, select.input-select:focus { border-color: var(--accent-blue); }
+
+    /* Graph Explorer Layout */
+    .graph-layout {
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 1rem;
+      height: 680px;
+    }
+
+    @media (max-width: 1024px) {
+      .graph-layout { grid-template-columns: 1fr; height: auto; }
+    }
+
+    .graph-canvas-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .graph-toolbar {
+      padding: 0.6rem 0.85rem;
+      border-bottom: 1px solid var(--border-color);
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* Dot Grid Background for Cytoscape Canvases */
+    .cy-viewport, #cy-graph-explorer, #cy-sim-canvas {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      min-height: 520px;
+      background-color: #f8fafc;
+      background-image: radial-gradient(#cbd5e1 1.2px, transparent 1.2px);
+      background-size: 20px 20px;
+      cursor: grab;
+    }
+    .cy-viewport:active, #cy-graph-explorer:active, #cy-sim-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Floating Zoom / Pan Controls Overlay */
+    .graph-floating-controls {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .graph-ctrl-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .graph-ctrl-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+    }
+
+    /* Floating Legend */
+    .graph-floating-legend {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      font-size: 0.6875rem;
+      color: var(--text-secondary);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Lockfile Dropzone */
+    .upload-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+      background: var(--bg-surface);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .upload-dropzone:hover, .upload-dropzone.dragover {
+      border-color: var(--accent-blue);
+      background: var(--accent-blue-subtle);
+    }
+
+    .node-drawer {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      overflow-y: auto;
+      max-height: 680px;
+    }
+
+    .drawer-empty {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem;
+    }
+
+    .evidence-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      margin-top: 0.75rem;
+      line-height: 1.6;
+    }
+
+    /* Simulator 3 Cards */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 1.25rem 0;
+    }
+
+    @media (max-width: 768px) {
+      .sim-grid { grid-template-columns: 1fr; }
+    }
+
+    .sim-card {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      background: var(--bg-surface);
+      transition: all 0.2s ease;
+    }
+
+    .sim-card.highlight {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+
+    .sim-val {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin: 0.35rem 0;
+    }
+
+    /* Cytoscape Simulation Visualizer */
+    .sim-graph-box {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      background: var(--bg-surface);
+      margin-top: 1.5rem;
+      overflow: hidden;
+    }
+
+    .sim-graph-header {
+      padding: 0.75rem 1.25rem;
+      background: #fafafa;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    #cy-sim-canvas {
+      width: 100%;
+      height: 440px;
+    }
+
+    /* Interventions List */
+    .intervention-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.85rem;
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.75rem;
+      background: var(--bg-surface);
+    }
+
+    .intervention-item:last-child { margin-bottom: 0; }
+
+    /* CRA Article 14 Alert Banner */
+    .sla-banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .sla-title { font-weight: 600; font-size: 0.9375rem; color: #1e40af; }
+    .sla-desc { font-size: 0.8125rem; color: #3b82f6; }
+    .sla-clock {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      background: #ffffff;
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid #dbeafe;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="logo-mark">M</div>
+        <div>
+          <span class="brand-title">MONARCH</span>
+          <span class="brand-pill" style="margin-left: 0.35rem;">ENTERPRISE</span>
+        </div>
+      </div>
+      <div class="system-status">
+        <div class="status-indicator">
+          <div class="pulse-dot"></div>
+          <span>Active Epoch: <strong id="hdr-epoch" class="font-mono">Loading...</strong></span>
+        </div>
+        <div>CSR Graph: <strong id="hdr-graph-stats">-</strong></div>
+        <div>Memory: <strong id="hdr-memory">42.5 MB</strong></div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-portfolio">
+        Portfolio & Posture
+        <span class="tab-badge" id="badge-pkg-count">0</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-graph">
+        Graph Explorer
+      </button>
+      <button class="tab-btn" data-tab="tab-simulator">
+        Compromise Simulator
+      </button>
+      <button class="tab-btn" data-tab="tab-solver">
+        Dominator Solver ("Fix-It")
+      </button>
+      <button class="tab-btn" data-tab="tab-backtest">
+        Incident Benchmark
+      </button>
+      <button class="tab-btn" data-tab="tab-policy">
+        Policy & CRA Compliance
+      </button>
+      <button class="tab-btn" data-tab="tab-watch">
+        Threat Watch Index
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main View Area -->
+  <main class="content-area">
+
+    <!-- VIEW 1: PORTFOLIO & POSTURE -->
+    <section id="tab-portfolio" class="view-container active">
+      <div class="grid-4">
+        <div class="stat-card">
+          <div class="stat-label">Monitored Packages</div>
+          <div class="stat-value" id="stat-packages">-</div>
+          <div class="stat-meta">Active dependency ecosystem</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CAS Storage Blobs</div>
+          <div class="stat-value" id="stat-versions">-</div>
+          <div class="stat-meta">Content-addressed sha256 payloads</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CSR Graph Edges</div>
+          <div class="stat-value" id="stat-edges">-</div>
+          <div class="stat-meta">Dual Forward & Reverse arrays</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">CRA Article 14 Clock</div>
+          <div class="stat-value" style="color: #2563eb;">24h SLA</div>
+          <div class="stat-meta">Early-warning regulatory timer</div>
+        </div>
+      </div>
+
+      <!-- Project Lockfile Ingestion & Dominator Card -->
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Project Lockfile Analysis & Lengauer-Tarjan Dominator Tree</h2>
+            <p class="card-subtitle">Upload your package-lock.json, yarn.lock, or pnpm-lock.yaml to calculate dominators, blast radius, and systemic risk</p>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="btn btn-sm" onclick="loadSampleLockfile()">Load Sample Lockfile</button>
+            <button class="btn btn-sm" onclick="resetToSeedDemo()">Reset to Seed Data</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="lockfile-drop-zone" class="upload-dropzone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)">
+            <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: var(--accent-blue); margin-bottom: 0.5rem;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+            </svg>
+            <div style="font-weight: 600; font-size: 0.9375rem; color: var(--text-primary);">Drag & drop your package-lock.json, yarn.lock, or pnpm-lock.yaml here</div>
+            <div style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem;">Extracts dependency edges, builds CSR graph, computes dominator cuts, and updates all views</div>
+            <input type="file" id="lockfile-file-input" accept=".json,.lock,.yaml,.yml" style="display: none;" onchange="handleFileInput(this)" />
+            <div style="margin-top: 0.75rem;">
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('lockfile-file-input').click()">Browse Local Lockfile</button>
+            </div>
+          </div>
+          <div id="upload-status-box" style="display: none; margin-top: 1rem; padding: 0.85rem 1rem; border-radius: var(--radius-md); font-size: 0.8125rem;"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Resolved Component Inventory & Risk Posture</h2>
+            <p class="card-subtitle">Calculated Consequence Score C(v) and Fragility Score F(v) under active epoch</p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-sm" onclick="exportData('vex')">Export OpenVEX</button>
+            <button class="btn btn-sm" onclick="exportData('sbom')">Export CycloneDX</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+            <div style="min-width: 280px;">
+              <input type="text" id="filter-pkg-search" class="input-text" placeholder="Search package name..." onkeyup="filterPackages()" />
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <span style="font-size: 0.8125rem; color: var(--text-muted);">Status:</span>
+              <select id="filter-pkg-status" class="input-select" onchange="filterPackages()" style="width: auto;">
+                <option value="ALL">All Statuses</option>
+                <option value="BLOCKED">Blocked</option>
+                <option value="WARN">Warnings</option>
+                <option value="PASS">Passing</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table" id="packages-table">
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Ecosystem</th>
+                  <th>Consequence C(v)</th>
+                  <th>Fragility F(v)</th>
+                  <th>Provenance</th>
+                  <th>Install Hook</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="packages-tbody">
+                <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading packages...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: GRAPH EXPLORER (CYTOSCAPE.JS) -->
+    <section id="tab-graph" class="view-container">
+      <div class="graph-layout">
+        <div class="graph-canvas-box">
+          <div class="graph-toolbar">
+            <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+              <strong>Dependency Network</strong>
+              <div style="display: flex; align-items: center; gap: 0.3rem;">
+                <label style="font-size: 0.75rem; color: var(--text-muted);">Layout:</label>
+                <select id="graph-layout-select" onchange="changeGraphLayout(this.value)" class="input-select btn-sm" style="width: auto; padding: 0.2rem 0.5rem;">
+                  <option value="breadthfirst">Hierarchical DAG (Clean)</option>
+                  <option value="cose">Force-Directed (Physics)</option>
+                  <option value="circle">Circular Network</option>
+                  <option value="concentric">Concentric Rings</option>
+                </select>
+              </div>
+              <input type="text" id="graph-node-search" placeholder="🔍 Find node in graph..." oninput="searchAndFocusNode(this.value)" class="input-text btn-sm" style="width: 150px; padding: 0.2rem 0.5rem;" />
+            </div>
+            <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+              <input type="text" id="live-fetch-graph-input" placeholder="Live npm pkg (e.g. lodash)..." class="input-text btn-sm" style="width: 170px; padding: 0.2rem 0.5rem;" onkeydown="if(event.key==='Enter') fetchLivePackageFromBar('live-fetch-graph-input')" />
+              <button class="btn btn-primary btn-sm" id="btn-graph-live-fetch" onclick="fetchLivePackageFromBar('live-fetch-graph-input')">Fetch & Ingest</button>
+              <button class="btn btn-sm" onclick="fitGraphView()">Fit</button>
+              <button class="btn btn-sm" onclick="resetGraphSelection()">Clear</button>
+            </div>
+          </div>
+          
+          <!-- Cytoscape Canvas with Floating Controls & Legend -->
+          <div style="position: relative; flex: 1; min-height: 520px; overflow: hidden;">
+            <div id="cy-graph-explorer" class="cy-viewport"></div>
+            
+            <div class="graph-floating-controls">
+              <button class="graph-ctrl-btn" title="Zoom In" onclick="zoomInExplorer()">+</button>
+              <button class="graph-ctrl-btn" title="Zoom Out" onclick="zoomOutExplorer()">−</button>
+              <button class="graph-ctrl-btn" title="Fit to Screen" onclick="fitGraphView()">⊡</button>
+              <button class="graph-ctrl-btn" title="Reset View" onclick="resetExplorerView()">↺</button>
+            </div>
+
+            <div class="graph-floating-legend">
+              <div class="legend-row"><span class="legend-dot" style="background: #dc2626;"></span> Critical Risk C(v) &ge; 75</div>
+              <div class="legend-row"><span class="legend-dot" style="background: #f59e0b;"></span> High Risk 50 &le; C(v) &lt; 75</div>
+              <div class="legend-row"><span class="legend-dot" style="background: #64748b;"></span> Standard C(v) &lt; 50</div>
+              <div class="legend-row"><span style="color: #94a3b8; font-size: 10px;">→ Directed Dependency Edge</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Node Inspector Drawer -->
+        <div class="node-drawer" id="node-drawer">
+          <div class="drawer-empty" id="drawer-empty-msg">
+            <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom: 0.75rem; color: var(--text-muted);">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"></path>
+            </svg>
+            <p style="font-weight: 500; font-size: 0.875rem;">No Package Selected</p>
+            <p style="font-size: 0.75rem;">Click any node in the graph to inspect blast radius, custody history, and signal provenance.</p>
+          </div>
+          <div id="drawer-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <div>
+                <h3 id="drawer-pkg-name" style="font-size: 1.125rem; font-weight: 700;">package</h3>
+                <span id="drawer-pkg-purl" class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">pkg:npm/name</span>
+              </div>
+              <span id="drawer-pkg-status" class="badge badge-pass">PASS</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+              <div style="background: var(--bg-subtle); padding: 0.6rem; border-radius: var(--radius-sm); text-align: center;">
+                <div style="font-size: 0.6875rem; color: var(--text-muted); text-transform: uppercase;">Consequence C(v)</div>
+                <div id="drawer-c-score" style="font-size: 1.25rem; font-weight: 700; color: #2563eb;">-</div>
+              </div>
+              <div style="background: var(--bg-subtle); padding: 0.6rem; border-radius: var(--radius-sm); text-align: center;">
+                <div style="font-size: 0.6875rem; color: var(--text-muted); text-transform: uppercase;">Fragility F(v)</div>
+                <div id="drawer-f-score" style="font-size: 1.25rem; font-weight: 700; color: #d97706;">-</div>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+              <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Transitive Blast Radius</div>
+              <div style="font-size: 0.8125rem; color: var(--text-secondary);">
+                Reaches <strong id="drawer-blast-count" style="color: var(--text-primary);">0</strong> packages across <strong id="drawer-blast-depth">0</strong> depth tiers.
+              </div>
+              <div id="drawer-direct-deps" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;"></div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+              <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Maintainer Custody &amp; Telemetry Window</div>
+              <div id="drawer-maintainers-list" style="font-size: 0.75rem;"></div>
+            </div>
+
+            <div>
+              <div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem;">Security Signal Evidence &amp; Provenance</div>
+              <div class="evidence-box" id="drawer-evidence-text"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: COMPROMISE SIMULATOR WITH CYTOSCAPE ANIMATED WAVE -->
+    <section id="tab-simulator" class="view-container">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Hypothetical Compromise Propagation Simulator</h2>
+            <p class="card-subtitle">Mathematically compare unconstrained topological spread against semver-gated and AST reachability models</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.25rem;">
+            <div style="min-width: 200px;">
+              <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.35rem;">Target Package</label>
+              <select id="sim-pkg-select" class="input-select">
+                <option value="express">express</option>
+              </select>
+            </div>
+            <div style="width: 140px;">
+              <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.35rem;">Injected Version</label>
+              <input type="text" id="sim-version-input" class="input-text" value="4.18.3" />
+            </div>
+            <div style="width: 180px;">
+              <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.35rem;">Lockfile Damping (δ)</label>
+              <input type="range" id="sim-damping-input" min="0.1" max="1.0" step="0.1" value="0.6" style="width: 100%;" oninput="document.getElementById('damping-val').innerText = this.value" />
+              <div style="font-size: 0.6875rem; color: var(--text-muted); text-align: right;">δ = <span id="damping-val">0.6</span></div>
+            </div>
+            <button class="btn btn-red" id="btn-run-simulation" onclick="runSimulation()">
+              Run Propagation Simulation
+            </button>
+            <button class="btn btn-secondary" onclick="toggleSourceUploadPanel()" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+              📁 Upload Application Code (.js/.ts)
+            </button>
+            <span id="sim-source-status-badge" class="badge badge-neutral" style="align-self: center;">Lockfile Only (AST Off)</span>
+          </div>
+
+          <!-- Inline AST Source Code Panel -->
+          <div id="source-code-panel" style="display: none; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div>
+                <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 0;">Upload First-Party Application Source Code (.js / .ts)</h3>
+                <p style="font-size: 0.8125rem; color: var(--text-secondary); margin: 0.25rem 0 0 0;">
+                  Lockfiles only contain dependency tree metadata. Real symbol reachability requires parsing first-party application source code to index imported modules and function call sites.
+                </p>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="toggleSourceUploadPanel()">Close</button>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+              <input type="file" id="source-file-input" accept=".js,.ts,.jsx,.tsx,.mjs,.cjs" multiple style="display: none;" onchange="handleSourceFileSelection(event)">
+              <button class="btn btn-sm btn-blue" onclick="document.getElementById('source-file-input').click()">
+                📂 Select .js / .ts Files
+              </button>
+              <button class="btn btn-sm btn-outline" onclick="loadSampleExpressSource()">
+                ⚡ Load Sample Express App Code
+              </button>
+              <span id="source-file-status" style="font-size: 0.8125rem; color: var(--text-muted);">No files selected</span>
+            </div>
+
+            <div>
+              <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Or Paste Source Code Directly</label>
+              <textarea id="source-code-textarea" rows="6" style="width: 100%; font-family: monospace; font-size: 0.8125rem; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm);" placeholder="const express = require('express');&#10;const app = express();&#10;app.use(express.json());&#10;app.listen(3000);"></textarea>
+            </div>
+
+            <div style="margin-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+              <button class="btn btn-sm btn-outline" onclick="clearSourceCode()">Reset to Lockfile-Only</button>
+              <button class="btn btn-sm btn-pass" id="btn-submit-source" onclick="submitSourceCode()">
+                ✓ Parse AST &amp; Re-run Simulation
+              </button>
+            </div>
+          </div>
+
+          <!-- 3 Live Cards -->
+          <div class="sim-grid">
+            <div class="sim-card">
+              <div class="stat-label" style="color: #b91c1c;">1. Naive (P-Graph Upper Bound)</div>
+              <div class="sim-val" id="sim-res-naive" style="color: #b91c1c;">-</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                Unconstrained topological reachability. Assumes every dependent blindly upgrades.
+              </div>
+            </div>
+            <div class="sim-card">
+              <div class="stat-label" style="color: #b45309;">2. Semver-Gated (V-Graph)</div>
+              <div class="sim-val" id="sim-res-semver" style="color: #b45309;">-</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                Evaluates RangeClasses 0–8, caret/tilde bounds, and propagation probability π(e,x).
+              </div>
+            </div>
+            <div class="sim-card highlight">
+              <div class="stat-label" style="color: #047857;">3. Semver + AST Reachability</div>
+              <div class="sim-val" id="sim-res-reach" style="color: #047857;">-</div>
+              <div style="font-size: 0.75rem; color: #047857;" id="sim-reach-desc">
+                Prunes unreferenced symbols via static import/call graph analysis.
+              </div>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <strong style="font-size: 0.875rem;">Noise Reduction KPI:</strong>
+                <span id="sim-noise-reduction" style="font-weight: 700; color: #059669; font-size: 1.125rem; margin-left: 0.35rem;">-%</span>
+              </div>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Eliminates false alarms via semver constraint gating and AST symbol reachability</span>
+            </div>
+          </div>
+
+          <!-- Cytoscape Compromise Visualizer & Wave Animation Canvas -->
+          <div class="sim-graph-box">
+            <div class="sim-graph-header">
+              <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                <strong style="font-size: 0.875rem;">Compromise Wave Visualizer</strong>
+                <span class="badge badge-block" id="sim-target-badge">Target: None</span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);" id="sim-legend-text">
+                  [🔴 Red = Injected Compromise | 🟠 Orange = Reachable Dependent | ⚪ Gray = Safe / Unaffected]
+                </span>
+              </div>
+              <div style="display: flex; gap: 0.4rem;">
+                <button class="btn btn-sm" onclick="fitSimView()">Fit View</button>
+                <button class="btn btn-sm" onclick="replaySimulationWave()">Replay Wave Animation</button>
+              </div>
+            </div>
+            <div style="position: relative; height: 440px; overflow: hidden;">
+              <div id="cy-sim-canvas" style="width: 100%; height: 100%;"></div>
+              <div class="graph-floating-controls">
+                <button class="graph-ctrl-btn" title="Zoom In" onclick="zoomInSim()">+</button>
+                <button class="graph-ctrl-btn" title="Zoom Out" onclick="zoomOutSim()">−</button>
+                <button class="graph-ctrl-btn" title="Fit to Screen" onclick="fitSimView()">⊡</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: DOMINATOR TREE SOLVER -->
+    <section id="tab-solver" class="view-container">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Submodular Dominator Intervention Solver</h2>
+            <p class="card-subtitle">Lengauer–Tarjan dominator tree + greedy knapsack solver with (1 - 1/e) ≈ 63.2% approximation guarantee</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <div>
+              <label style="display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 0.35rem;">Effort Budget</label>
+              <input type="number" id="solver-budget" class="input-text" value="5.0" min="1.0" max="20.0" step="0.5" style="width: 120px;" />
+            </div>
+            <button class="btn btn-primary" id="btn-run-solver" onclick="runSolver()">Solve Minimal Cut Interventions</button>
+          </div>
+
+          <div id="solver-results-box" style="display: none;">
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                  <div style="font-size: 0.8125rem; font-weight: 600; color: #166534; text-transform: uppercase;">Total Risk Reduction</div>
+                  <div id="solver-reduction-pct" style="font-size: 1.875rem; font-weight: 700; color: #15803d;">--%</div>
+                  <div id="solver-risk-details" style="font-size: 0.75rem; color: #166534;">Eliminated risk units</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.8125rem; font-weight: 600; color: #166534; text-transform: uppercase;">Effort Cost Used</div>
+                  <div id="solver-cost-used" style="font-size: 1.875rem; font-weight: 700; color: #15803d;">- / 5.0</div>
+                </div>
+                <div style="max-width: 320px; font-size: 0.75rem; color: #166534;">
+                  <strong>Approximation Guarantee:</strong> Achieves &ge; (1 - 1/e) &approx; 63.2% of optimal submodular coverage.
+                </div>
+              </div>
+            </div>
+
+            <h3 style="font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.75rem;">Recommended Interventions</h3>
+            <div class="table-container" style="margin-bottom: 1.5rem;">
+              <table class="data-table" id="solver-interventions-table">
+                <thead>
+                  <tr>
+                    <th style="width: 45px;">#</th>
+                    <th>Action</th>
+                    <th>Target Direct Dependency</th>
+                    <th>Effort Cost</th>
+                    <th>Dominated Transitive Packages Eliminated</th>
+                    <th style="text-align: right;">Remediation Impact</th>
+                  </tr>
+                </thead>
+                <tbody id="interventions-tbody">
+                  <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">Click "Solve Minimal Cut Interventions" to calculate optimal cuts.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="interventions-container"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: HISTORICAL INCIDENT BACKTEST -->
+    <section id="tab-backtest" class="view-container">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Historical Attack Detection Benchmark</h2>
+            <p class="card-subtitle">Backtesting model inference against documented supply chain takeovers and negative control packages</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Live Threshold Controller & Custom Simulator Controls -->
+          <div style="background: var(--bg-subtle); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+              <div>
+                <span style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); display: block;">Decision Classification Threshold (&tau;)</span>
+                <span style="font-size: 0.8125rem; color: var(--text-secondary);">Packages with Fragility Score &ge; &tau; are classified as Compromised</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <input type="range" id="bt-threshold-slider" min="5" max="99" value="70" step="1" style="width: 180px; cursor: pointer;" oninput="updateThreshold(this.value)">
+                <span id="bt-threshold-val" class="font-mono" style="font-weight: 700; font-size: 1.125rem; min-width: 4.5rem; color: #2563eb;">70.0%</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <button class="btn btn-sm btn-outline" onclick="resetThreshold(70)">Reset (70%)</button>
+              <button class="btn btn-sm btn-blue" onclick="toggleCustomAttackModal()">+ Simulate Custom Vector</button>
+            </div>
+          </div>
+
+          <!-- Inline Custom Vector Simulator Panel -->
+          <div id="custom-vector-panel" style="display: none; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <div>
+                <h3 style="font-size: 0.9375rem; font-weight: 600; margin: 0;">Test Custom Attack Vector Against Fragility Model</h3>
+                <p style="font-size: 0.8125rem; color: var(--text-secondary); margin: 0.25rem 0 0 0;">Inject an arbitrary signal vector to observe live Platt scaling, quadratic interaction scoring, and threshold classification.</p>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="toggleCustomAttackModal()">Close</button>
+            </div>
+            <div class="grid-4" style="gap: 1rem; margin-bottom: 1rem;">
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Incident ID</label>
+                <input type="text" id="cv-id" class="search-input" value="custom-zero-day-2026" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Target Package</label>
+                <input type="text" id="cv-pkg" class="search-input" value="custom-library" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Ground Truth Label</label>
+                <select id="cv-gt" class="search-input" style="width: 100%;">
+                  <option value="true">Malicious (Attack)</option>
+                  <option value="false">Benign (Control)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Repo Drift (Tarball Files)</label>
+                <input type="number" id="cv-repo-drift" class="search-input" value="8" style="width: 100%;">
+              </div>
+            </div>
+            <div class="grid-4" style="gap: 1rem; margin-bottom: 1rem;">
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Ownership Churn (0-1)</label>
+                <input type="number" id="cv-ownership-churn" class="search-input" value="1.0" step="0.1" min="0" max="1" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Churn After Dormancy (0-1)</label>
+                <input type="number" id="cv-churn-dormancy" class="search-input" value="1.0" step="0.1" min="0" max="1" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">New Install Hook (0-1)</label>
+                <input type="number" id="cv-install-hook" class="search-input" value="1.0" step="0.1" min="0" max="1" style="width: 100%;">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">Bus Factor</label>
+                <input type="number" id="cv-bus-factor" class="search-input" value="1.0" step="0.5" min="1" style="width: 100%;">
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+              <button class="btn btn-sm btn-blue" onclick="submitCustomAttack()">Compute Model Inference &amp; Evaluate</button>
+            </div>
+          </div>
+
+          <div class="grid-4" style="margin-bottom: 1.5rem;">
+            <div class="stat-card">
+              <div class="stat-label">Model Precision</div>
+              <div class="stat-value" id="bt-precision" style="color: #10b981;">-</div>
+              <div class="stat-meta">TP / (TP + FP) at current threshold</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Model Recall</div>
+              <div class="stat-value" id="bt-recall" style="color: #10b981;">-</div>
+              <div class="stat-meta">TP / (TP + FN) at current threshold</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">True Positives / False Pos</div>
+              <div class="stat-value" id="bt-tp">-</div>
+              <div class="stat-meta" id="bt-fp-meta">FP: 0 under current harness</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">True Negatives / False Neg</div>
+              <div class="stat-value" id="bt-tn">-</div>
+              <div class="stat-meta" id="bt-fn-meta">FN: 0 under current harness</div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Incident &amp; Advisory</th>
+                  <th>Target Package</th>
+                  <th>Ground Truth</th>
+                  <th>Fragility Score F(v)</th>
+                  <th>Calibrated Prob</th>
+                  <th>Top Contributing Signals</th>
+                  <th>Outcome</th>
+                </tr>
+              </thead>
+              <tbody id="backtest-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading historical backtest results...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 6: POLICY & CRA COMPLIANCE -->
+    <section id="tab-policy" class="view-container">
+      <!-- EU CRA Article 14 Early Warning Banner -->
+      <div class="sla-banner">
+        <div>
+          <div class="sla-title">EU Cyber Resilience Act (CRA) Article 14 Compliance</div>
+          <div class="sla-desc">Mandatory 24-hour early-warning notification for actively exploited systemic dependencies</div>
+        </div>
+        <div class="sla-clock">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span id="cra-timer-display">23h 59m 45s remaining</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Security Policies &amp; Compliance Rules</h2>
+            <p class="card-subtitle">Automated CI/CD gate conditions and SLA escalation timers</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Rule ID</th>
+                  <th>Enforcement Action</th>
+                  <th>SLA Window</th>
+                  <th>Trigger Condition</th>
+                  <th>Policy Description</th>
+                </tr>
+              </thead>
+              <tbody id="policy-tbody">
+                <tr><td colspan="5" style="text-align: center;">Loading policy rules...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 7: MONARCH WATCH -->
+    <section id="tab-watch" class="view-container">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Global Critical Infrastructure Threat Watch</h2>
+            <p class="card-subtitle">Top systematically critical open-source software components ranked by consequence score</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Live npm package search banner -->
+          <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.25rem; background: var(--bg-subtle); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); flex-wrap: wrap;">
+            <strong style="font-size: 0.8125rem;">Query & Ingest Any Live npm Package:</strong>
+            <input type="text" id="watch-live-fetch-input" placeholder="e.g. lodash, axios, react, chalk, zod..." class="input-text btn-sm" style="flex: 1; max-width: 280px;" onkeydown="if(event.key==='Enter') fetchLivePackageFromBar('watch-live-fetch-input')" />
+            <button class="btn btn-primary btn-sm" id="btn-watch-live-fetch" onclick="fetchLivePackageFromBar('watch-live-fetch-input')">Fetch & Score Live</button>
+            <span id="watch-fetch-spinner" style="display: none; font-size: 0.75rem; color: var(--accent-blue); font-weight: 500;">Querying npm registry & computing C(v)...</span>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Infrastructure Package</th>
+                  <th>Consequence C(v)</th>
+                  <th>Downstream Blast Radius</th>
+                  <th>Poll Tier</th>
+                  <th>Install Hook</th>
+                  <th style="text-align: right;">Sponsorship Routing</th>
+                </tr>
+              </thead>
+              <tbody id="watch-tbody">
+                <tr><td colspan="7" style="text-align: center;">Loading Monarch Watch index...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Frontend Logic -->
+  <script>
+    let allPackages = [];
+    let graphData = { nodes: [], edges: [] };
+    let activeSelectedPkg = null;
+    let cyExplorer = null;
+    let cySimulator = null;
+    let lastSimResult = null;
+
+    // CRA Article 14 Countdown Timer
+    let slaSecondsRemaining = 23 * 3600 + 59 * 60 + 45;
+    setInterval(() => {
+      if (slaSecondsRemaining > 0) slaSecondsRemaining--;
+      const h = Math.floor(slaSecondsRemaining / 3600);
+      const m = Math.floor((slaSecondsRemaining % 3600) / 60);
+      const s = slaSecondsRemaining % 60;
+      const el = document.getElementById('cra-timer-display');
+      if (el) el.innerText = `${h}h ${m}m ${s}s remaining`;
+    }, 1000);
+
+    // Tab Switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+
+        btn.classList.add('active');
+        const targetView = document.getElementById(btn.dataset.tab);
+        if (targetView) targetView.classList.add('active');
+
+        if (btn.dataset.tab === 'tab-graph') {
+          setTimeout(() => {
+            if (!cyExplorer) {
+              initCyExplorer();
+            } else {
+              cyExplorer.resize();
+              cyExplorer.fit(undefined, 40);
+            }
+          }, 60);
+        } else if (btn.dataset.tab === 'tab-simulator') {
+          setTimeout(() => {
+            if (!cySimulator) {
+              initCySimulator();
+            } else {
+              cySimulator.resize();
+              cySimulator.fit(undefined, 30);
+            }
+          }, 60);
+        } else if (btn.dataset.tab === 'tab-solver') {
+          runSolver();
+        }
+      });
+    });
+
+    // App Initialization
+    async function init() {
+      try {
+        const [ovRes, pkgsRes, graphRes, btRes, polRes, watchRes] = await Promise.all([
+          fetch('/api/overview').then(r => r.json()),
+          fetch('/api/packages').then(r => r.json()),
+          fetch('/api/graph').then(r => r.json()),
+          fetch('/api/backtest').then(r => r.json()),
+          fetch('/api/policies').then(r => r.json()),
+          fetch('/api/watch').then(r => r.json())
+        ]);
+
+        // Overview
+        document.getElementById('hdr-epoch').innerText = ovRes.epoch_id.slice(0, 8);
+        document.getElementById('hdr-graph-stats').innerText = `${ovRes.graph_nodes} Nodes, ${ovRes.edge_count} Edges`;
+        document.getElementById('hdr-memory').innerText = `${ovRes.memory_resident_mb} MB`;
+        document.getElementById('stat-packages').innerText = ovRes.package_count;
+        document.getElementById('stat-versions').innerText = ovRes.version_count;
+        document.getElementById('stat-edges').innerText = ovRes.edge_count;
+        document.getElementById('badge-pkg-count').innerText = ovRes.package_count;
+
+        // Packages Table
+        allPackages = pkgsRes;
+        renderPackagesTable(allPackages);
+
+        // Graph Data
+        graphData = graphRes;
+        updateGraphDataInViews();
+
+        // Backtest
+        renderBacktest(btRes);
+
+        // Policy
+        renderPolicy(polRes);
+
+        // Watch Index
+        renderWatch(watchRes);
+
+        // Initial Solver Execution
+        runSolver();
+
+      } catch (err) {
+        console.error('Initialization failed:', err);
+      }
+    }
+
+    // Packages Table Rendering
+    function renderPackagesTable(pkgs) {
+      const tbody = document.getElementById('packages-tbody');
+      if (!tbody) return;
+
+      if (!pkgs.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No packages matching criteria.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pkgs.map(p => {
+        let statusBadge = p.status === 'PASS' 
+          ? `<span class="badge badge-pass">PASS</span>` 
+          : (p.status === 'WARN' ? `<span class="badge badge-warn">WARN</span>` : `<span class="badge badge-block">BLOCKED</span>`);
+
+        let hookBadge = p.has_install_hook 
+          ? `<span class="badge badge-block font-mono">HOOK</span>` 
+          : `<span class="badge badge-neutral font-mono">NONE</span>`;
+
+        let provBadge = p.provenance === 'ATTESTED'
+          ? `<span class="badge badge-pass font-mono">ATTESTED</span>`
+          : `<span class="badge badge-neutral font-mono">${p.provenance}</span>`;
+
+        let cClass = p.consequence_score < 50 ? 'score-fill-low' : p.consequence_score < 75 ? 'score-fill-med' : 'score-fill-high';
+        let fStyle = p.fragility_score >= 70 ? 'color: #dc2626; font-weight: 700;' : p.fragility_score >= 40 ? 'color: #d97706; font-weight: 600;' : 'color: #059669;';
+
+        return `
+          <tr>
+            <td>
+              <strong style="color: var(--text-primary); cursor: pointer;" onclick="selectPackageFromTable('${p.name}')">${p.name}</strong>
+              <div style="font-size: 0.6875rem; color: var(--text-muted);">${p.versions} version(s) recorded</div>
+            </td>
+            <td><span class="badge badge-neutral">${p.ecosystem}</span></td>
+            <td>
+              <div class="score-bar-container">
+                <span class="font-mono" style="font-weight: 600; min-width: 32px;">${p.consequence_score}</span>
+                <div class="score-bar"><div class="score-fill ${cClass}" style="width: ${p.consequence_score}%"></div></div>
+              </div>
+            </td>
+            <td><span class="font-mono" style="${fStyle}">${p.fragility_score}</span></td>
+            <td>${provBadge}</td>
+            <td>${hookBadge}</td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-sm" onclick="selectPackageFromTable('${p.name}')">Inspect</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterPackages() {
+      const q = document.getElementById('filter-pkg-search').value.toLowerCase().trim();
+      const statusFilter = document.getElementById('filter-pkg-status').value;
+
+      const filtered = allPackages.filter(p => {
+        const matchesQ = !q || p.name.toLowerCase().includes(q);
+        const matchesStatus = (statusFilter === 'ALL') || (p.status === statusFilter);
+        return matchesQ && matchesStatus;
+      });
+
+      renderPackagesTable(filtered);
+    }
+
+    async function selectPackageFromTable(name) {
+      document.querySelector('[data-tab="tab-graph"]').click();
+      setTimeout(async () => {
+        await inspectPackage(name);
+        searchAndFocusNode(name);
+      }, 100);
+    }
+
+    // Helper: Cytoscape Layout Factory
+    function getExplorerLayout(name = 'breadthfirst') {
+      if (name === 'breadthfirst') {
+        return {
+          name: 'breadthfirst',
+          directed: true,
+          padding: 40,
+          spacingFactor: 1.55,
+          avoidOverlap: true,
+          nodeDimensionsIncludeLabels: true,
+          animate: true,
+          animationDuration: 350
+        };
+      } else if (name === 'cose') {
+        return {
+          name: 'cose',
+          padding: 40,
+          nodeRepulsion: function() { return 350000; },
+          idealEdgeLength: function() { return 110; },
+          edgeElasticity: function() { return 100; },
+          nestingFactor: 5,
+          gravity: 40,
+          numIter: 1000,
+          animate: false,
+          avoidOverlap: true
+        };
+      } else if (name === 'circle') {
+        return {
+          name: 'circle',
+          padding: 40,
+          avoidOverlap: true,
+          animate: true,
+          animationDuration: 350
+        };
+      } else {
+        return {
+          name: 'concentric',
+          padding: 40,
+          concentric: function(node) {
+            return node.data('consequence') || 20;
+          },
+          levelWidth: function() { return 25; },
+          avoidOverlap: true,
+          animate: true,
+          animationDuration: 350
+        };
+      }
+    }
+
+    // Cytoscape: Graph Explorer
+    function initCyExplorer() {
+      const container = document.getElementById('cy-graph-explorer');
+      if (!container || cyExplorer) return;
+
+      const elements = [];
+      graphData.nodes.forEach(n => {
+        elements.push({
+          data: {
+            id: n.id,
+            label: n.id,
+            consequence: n.consequence_score
+          }
+        });
+      });
+
+      graphData.edges.forEach((e, idx) => {
+        elements.push({
+          data: {
+            id: `edge_${idx}`,
+            source: e.source,
+            target: e.target
+          }
+        });
+      });
+
+      cyExplorer = cytoscape({
+        container: container,
+        elements: elements,
+        zoomingEnabled: true,
+        userZoomingEnabled: true,
+        panningEnabled: true,
+        userPanningEnabled: true,
+        boxSelectionEnabled: false,
+        wheelSensitivity: 0.25,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'label': 'data(label)',
+              'font-family': 'Inter, sans-serif',
+              'font-size': '11px',
+              'font-weight': 600,
+              'text-valign': 'bottom',
+              'text-margin-y': 6,
+              'color': '#0f172a',
+              'background-color': '#ffffff',
+              'border-width': 2.5,
+              'border-color': function(ele) {
+                const c = ele.data('consequence');
+                return c >= 75 ? '#dc2626' : (c >= 50 ? '#f59e0b' : '#64748b');
+              },
+              'width': function(ele) {
+                const c = ele.data('consequence') || 30;
+                return Math.max(30, Math.min(46, 30 + (c / 100) * 16));
+              },
+              'height': function(ele) {
+                const c = ele.data('consequence') || 30;
+                return Math.max(30, Math.min(46, 30 + (c / 100) * 16));
+              },
+              'text-background-color': '#ffffff',
+              'text-background-opacity': 0.92,
+              'text-background-padding': '3px',
+              'text-background-shape': 'roundrectangle',
+              'text-border-color': '#e2e8f0',
+              'text-border-width': 1,
+              'text-border-opacity': 0.8
+            }
+          },
+          {
+            selector: 'node:selected, node.active-selected',
+            style: {
+              'border-color': '#2563eb',
+              'border-width': 4,
+              'background-color': '#dbeafe',
+              'text-background-color': '#dbeafe',
+              'text-border-color': '#93c5fd'
+            }
+          },
+          {
+            selector: 'node.upstream-affected',
+            style: {
+              'border-color': '#ea580c',
+              'background-color': '#ffedd5',
+              'border-width': 3,
+              'text-background-color': '#ffedd5',
+              'text-border-color': '#fed7aa'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 1.6,
+              'line-color': '#cbd5e1',
+              'target-arrow-color': '#94a3b8',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'arrow-scale': 0.85
+            }
+          },
+          {
+            selector: 'edge.active-edge',
+            style: {
+              'width': 2.8,
+              'line-color': '#2563eb',
+              'target-arrow-color': '#2563eb'
+            }
+          }
+        ],
+        layout: getExplorerLayout('breadthfirst')
+      });
+
+      cyExplorer.on('tap', 'node', function(evt) {
+        const node = evt.target;
+        inspectPackage(node.id());
+      });
+    }
+
+    function changeGraphLayout(layoutName) {
+      if (!cyExplorer) return;
+      cyExplorer.layout(getExplorerLayout(layoutName)).run();
+      cyExplorer.fit(undefined, 40);
+    }
+
+    function searchAndFocusNode(query) {
+      if (!cyExplorer) return;
+      const q = (query || '').trim().toLowerCase();
+      if (!q) {
+        cyExplorer.elements().removeClass('active-selected');
+        return;
+      }
+      const match = cyExplorer.nodes().filter(n => n.id().toLowerCase().includes(q))[0];
+      if (match) {
+        cyExplorer.elements().removeClass('active-selected');
+        match.addClass('active-selected');
+        cyExplorer.animate({
+          center: { eles: match },
+          zoom: 1.4,
+          duration: 300
+        });
+        inspectPackage(match.id());
+      }
+    }
+
+    function zoomInExplorer() {
+      if (cyExplorer) {
+        cyExplorer.zoom({
+          level: cyExplorer.zoom() * 1.3,
+          renderedPosition: { x: cyExplorer.width() / 2, y: cyExplorer.height() / 2 }
+        });
+      }
+    }
+
+    function zoomOutExplorer() {
+      if (cyExplorer) {
+        cyExplorer.zoom({
+          level: cyExplorer.zoom() * 0.77,
+          renderedPosition: { x: cyExplorer.width() / 2, y: cyExplorer.height() / 2 }
+        });
+      }
+    }
+
+    function resetExplorerView() {
+      if (cyExplorer) {
+        const sel = document.getElementById('graph-layout-select');
+        const layoutName = sel ? sel.value : 'breadthfirst';
+        cyExplorer.layout(getExplorerLayout(layoutName)).run();
+        cyExplorer.fit(undefined, 40);
+      }
+    }
+
+    function fitGraphView() {
+      if (cyExplorer) cyExplorer.fit(undefined, 40);
+    }
+
+    function resetGraphSelection() {
+      activeSelectedPkg = null;
+      if (cyExplorer) {
+        cyExplorer.elements().removeClass('active-selected upstream-affected active-edge');
+      }
+      document.getElementById('drawer-empty-msg').style.display = 'flex';
+      document.getElementById('drawer-content').style.display = 'none';
+    }
+
+    async function inspectPackage(pkgName) {
+      activeSelectedPkg = pkgName;
+      try {
+        const res = await fetch(`/api/package/${pkgName}`);
+        if (!res.ok) return;
+        const d = await res.json();
+
+        document.getElementById('drawer-empty-msg').style.display = 'none';
+        document.getElementById('drawer-content').style.display = 'block';
+
+        document.getElementById('drawer-pkg-name').innerText = d.name;
+        document.getElementById('drawer-pkg-purl').innerText = d.purl || `pkg:npm/${d.name}`;
+        document.getElementById('drawer-c-score').innerText = d.consequence_score;
+        document.getElementById('drawer-f-score').innerText = d.fragility_score;
+        document.getElementById('drawer-blast-count').innerText = d.blast_radius_count;
+        document.getElementById('drawer-blast-depth').innerText = d.max_blast_depth;
+
+        document.getElementById('drawer-direct-deps').innerText = 
+          d.direct_dependents.length ? `Direct Dependents: ${d.direct_dependents.join(', ')}` : 'No direct dependents in graph';
+
+        const maintHtml = d.maintainer_events.length 
+          ? d.maintainer_events.map(m => `
+              <div style="display: flex; justify-content: space-between; padding: 0.25rem 0; border-bottom: 1px solid var(--border-color);">
+                <span>${m.maintainer}</span>
+                <span class="badge badge-neutral">${m.event_type} (${Math.round(m.observation_gap_seconds)}s gap)</span>
+              </div>
+            `).join('')
+          : '<div style="color: var(--text-muted);">No custody changes recorded</div>';
+        document.getElementById('drawer-maintainers-list').innerHTML = maintHtml;
+
+        const ev = d.evidence_contract;
+        document.getElementById('drawer-evidence-text').innerHTML = `
+          <div><strong>ASSERTION:</strong> ${ev.assertion}</div>
+          <div style="margin-top: 0.35rem;"><strong>CONFIDENCE:</strong> ${ev.assessment.confidence} (P = ${ev.assessment.calibrated_probability})</div>
+          <div style="margin-top: 0.35rem;"><strong>RECOMMENDATION:</strong> ${ev.recommended_action}</div>
+          <div style="margin-top: 0.35rem; color: var(--text-muted); font-size: 0.6875rem;">${ev.base_rate_note}</div>
+        `;
+
+        if (cyExplorer) {
+          cyExplorer.elements().removeClass('active-selected upstream-affected active-edge');
+          const targetNode = cyExplorer.$id(pkgName);
+          if (targetNode.length) {
+            targetNode.addClass('active-selected');
+            targetNode.incomers('edge').addClass('active-edge');
+            targetNode.incomers('node').addClass('upstream-affected');
+          }
+        }
+      } catch (err) {
+        console.error('Failed to inspect package:', err);
+      }
+    }
+
+    // Cytoscape: Compromise Visualizer & Wave Animation
+    function initCySimulator() {
+      const container = document.getElementById('cy-sim-canvas');
+      if (!container || cySimulator) return;
+
+      const elements = [];
+      graphData.nodes.forEach(n => {
+        elements.push({
+          data: {
+            id: n.id,
+            label: n.id,
+            consequence: n.consequence_score
+          }
+        });
+      });
+
+      graphData.edges.forEach((e, idx) => {
+        elements.push({
+          data: {
+            id: `sim_edge_${idx}`,
+            source: e.source,
+            target: e.target
+          }
+        });
+      });
+
+      cySimulator = cytoscape({
+        container: container,
+        elements: elements,
+        zoomingEnabled: true,
+        userZoomingEnabled: true,
+        panningEnabled: true,
+        userPanningEnabled: true,
+        boxSelectionEnabled: false,
+        wheelSensitivity: 0.25,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'label': 'data(label)',
+              'font-family': 'Inter, sans-serif',
+              'font-size': '11px',
+              'font-weight': 600,
+              'text-valign': 'bottom',
+              'text-margin-y': 6,
+              'color': '#475569',
+              'background-color': '#ffffff',
+              'border-width': 2,
+              'border-color': '#94a3b8',
+              'width': 34,
+              'height': 34,
+              'text-background-color': '#ffffff',
+              'text-background-opacity': 0.92,
+              'text-background-padding': '3px',
+              'text-background-shape': 'roundrectangle',
+              'text-border-color': '#e2e8f0',
+              'text-border-width': 1,
+              'text-border-opacity': 0.8,
+              'transition-property': 'background-color, border-color, border-width, opacity, width, height',
+              'transition-duration': '0.35s'
+            }
+          },
+          {
+            selector: 'node.compromise-target',
+            style: {
+              'background-color': '#dc2626',
+              'border-color': '#991b1b',
+              'border-width': 5,
+              'color': '#dc2626',
+              'font-weight': 700,
+              'width': 44,
+              'height': 44,
+              'text-background-color': '#fee2e2',
+              'text-border-color': '#fca5a5'
+            }
+          },
+          {
+            selector: 'node.compromise-wave-1',
+            style: {
+              'background-color': '#ea580c',
+              'border-color': '#c2410c',
+              'border-width': 4,
+              'color': '#ea580c',
+              'width': 38,
+              'height': 38,
+              'text-background-color': '#ffedd5',
+              'text-border-color': '#fed7aa'
+            }
+          },
+          {
+            selector: 'node.compromise-wave-2',
+            style: {
+              'background-color': '#f59e0b',
+              'border-color': '#d97706',
+              'border-width': 3,
+              'color': '#b45309',
+              'text-background-color': '#fef3c7',
+              'text-border-color': '#fde68a'
+            }
+          },
+          {
+            selector: 'node.pruned-safe',
+            style: {
+              'background-color': '#f0fdf4',
+              'border-color': '#10b981',
+              'border-width': 3,
+              'color': '#047857'
+            }
+          },
+          {
+            selector: 'node.dimmed-safe',
+            style: {
+              'opacity': 0.25,
+              'border-color': '#cbd5e1',
+              'background-color': '#f8fafc',
+              'color': '#94a3b8'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 1.6,
+              'line-color': '#cbd5e1',
+              'target-arrow-color': '#cbd5e1',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'arrow-scale': 0.8,
+              'transition-property': 'line-color, target-arrow-color, width, opacity',
+              'transition-duration': '0.35s'
+            }
+          },
+          {
+            selector: 'edge.edge-compromised',
+            style: {
+              'width': 3,
+              'line-color': '#ea580c',
+              'target-arrow-color': '#ea580c'
+            }
+          },
+          {
+            selector: 'edge.edge-dimmed',
+            style: {
+              'opacity': 0.15,
+              'line-color': '#e2e8f0'
+            }
+          }
+        ],
+        layout: getExplorerLayout('breadthfirst')
+      });
+    }
+
+    function zoomInSim() {
+      if (cySimulator) {
+        cySimulator.zoom({
+          level: cySimulator.zoom() * 1.3,
+          renderedPosition: { x: cySimulator.width() / 2, y: cySimulator.height() / 2 }
+        });
+      }
+    }
+
+    function zoomOutSim() {
+      if (cySimulator) {
+        cySimulator.zoom({
+          level: cySimulator.zoom() * 0.77,
+          renderedPosition: { x: cySimulator.width() / 2, y: cySimulator.height() / 2 }
+        });
+      }
+    }
+
+    function fitSimView() {
+      if (cySimulator) cySimulator.fit(undefined, 30);
+    }
+
+    // Synchronize Cytoscape elements with fresh data
+    function updateGraphDataInViews() {
+      const elements = [];
+      graphData.nodes.forEach(n => {
+        elements.push({
+          data: {
+            id: n.id,
+            label: n.id,
+            consequence: n.consequence_score
+          }
+        });
+      });
+      graphData.edges.forEach((e, idx) => {
+        elements.push({
+          data: {
+            id: `edge_${idx}`,
+            source: e.source,
+            target: e.target
+          }
+        });
+      });
+
+      if (cyExplorer) {
+        cyExplorer.elements().remove();
+        cyExplorer.add(elements);
+        const layoutSelect = document.getElementById('graph-layout-select');
+        const layoutName = layoutSelect ? layoutSelect.value : 'breadthfirst';
+        cyExplorer.layout(getExplorerLayout(layoutName)).run();
+        cyExplorer.fit(undefined, 40);
+      }
+
+      if (cySimulator) {
+        cySimulator.elements().remove();
+        cySimulator.add(elements);
+        cySimulator.layout(getExplorerLayout('breadthfirst')).run();
+        cySimulator.fit(undefined, 30);
+      }
+
+      // Populate simulator dropdown
+      const sel = document.getElementById('sim-pkg-select');
+      if (sel) {
+        const curVal = sel.value;
+        sel.innerHTML = graphData.nodes.map(n => `<option value="${n.id}">${n.id} (C: ${n.consequence_score})</option>`).join('');
+        if (graphData.nodes.some(n => n.id === curVal)) {
+          sel.value = curVal;
+        }
+      }
+    }
+
+    // AST Source Code Upload Handlers
+    function toggleSourceUploadPanel() {
+      const panel = document.getElementById('source-code-panel');
+      if (!panel) return;
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function handleSourceFileSelection(event) {
+      const files = event.target.files;
+      const statusEl = document.getElementById('source-file-status');
+      if (!files || !files.length) {
+        if (statusEl) statusEl.innerText = 'No files selected';
+        return;
+      }
+      if (statusEl) statusEl.innerText = `${files.length} file(s) selected: ` + Array.from(files).map(f => f.name).join(', ');
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('source-code-textarea').value = e.target.result;
+      };
+      reader.readAsText(files[0]);
+    }
+
+    function loadSampleExpressSource() {
+      const sample = `// First-party application entrypoint (app.js)
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+// Direct routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', uptime: process.uptime() });
+});
+
+app.listen(3000, () => {
+  console.log('Production server listening on port 3000');
+});
+`;
+      document.getElementById('source-code-textarea').value = sample;
+      const statusEl = document.getElementById('source-file-status');
+      if (statusEl) statusEl.innerText = 'Loaded sample Express app (imports express & body-parser)';
+    }
+
+    async function submitSourceCode() {
+      const textarea = document.getElementById('source-code-textarea');
+      const code = textarea ? textarea.value.trim() : '';
+      const btn = document.getElementById('btn-submit-source');
+      const statusEl = document.getElementById('source-file-status');
+
+      if (!code) {
+        alert('Please select a file or paste application source code (.js or .ts).');
+        return;
+      }
+
+      const origText = btn ? btn.innerText : '';
+      if (btn) btn.innerText = 'Parsing AST...';
+
+      try {
+        const res = await fetch('/api/upload-source', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source_code: code, filename: 'app.js' })
+        });
+        const d = await res.json();
+        if (!res.ok) {
+          alert('Failed to parse AST: ' + (d.error || 'Server error'));
+          return;
+        }
+
+        const badge = document.getElementById('sim-source-status-badge');
+        if (badge) {
+          badge.className = 'badge badge-pass';
+          badge.innerText = `✓ AST Active (${d.files_parsed} file(s))`;
+        }
+
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color: #059669; font-weight: 600;">✓ Indexed ${d.imported_packages_count} package imports: ${d.imported_packages.join(', ') || 'none'}</span>`;
+        }
+
+        await runSimulation();
+
+      } catch (err) {
+        alert('Network error parsing source code: ' + err.message);
+      } finally {
+        if (btn) btn.innerText = origText;
+      }
+    }
+
+    async function clearSourceCode() {
+      try {
+        const res = await fetch('/api/upload-source', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reset: true })
+        });
+        const d = await res.json();
+        const badge = document.getElementById('sim-source-status-badge');
+        if (badge) {
+          badge.className = 'badge badge-neutral';
+          badge.innerText = 'Lockfile Only (AST Off)';
+        }
+        const statusEl = document.getElementById('source-file-status');
+        if (statusEl) statusEl.innerText = 'Cleared AST index. Reverted to lockfile-only evaluation.';
+        const textarea = document.getElementById('source-code-textarea');
+        if (textarea) textarea.value = '';
+
+        await runSimulation();
+      } catch (err) {
+        console.error('Failed to clear AST index:', err);
+      }
+    }
+
+    // Run Compromise Simulation
+    async function runSimulation() {
+      const pkg = document.getElementById('sim-pkg-select').value;
+      const ver = document.getElementById('sim-version-input').value;
+      const damping = document.getElementById('sim-damping-input').value;
+
+      const btn = document.getElementById('btn-run-simulation');
+      if (btn) btn.innerText = 'Simulating...';
+
+      try {
+        const res = await fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ package: pkg, version: ver, damping: damping })
+        });
+        const d = await res.json();
+        lastSimResult = d;
+
+        document.getElementById('sim-res-naive').innerText = `${d.naive_reach} pkgs`;
+        document.getElementById('sim-res-semver').innerText = `${d.semver_gated_reach} pkgs`;
+
+        const reachElem = document.getElementById('sim-res-reach');
+        const reachDesc = document.getElementById('sim-reach-desc');
+        const noiseElem = document.getElementById('sim-noise-reduction');
+        const badge = document.getElementById('sim-source-status-badge');
+
+        if (d.reachability_status === 'NOT_EVALUATED') {
+          reachElem.innerHTML = `<span style="font-size: 1.125rem; font-weight: 600; color: var(--text-muted);">Not Evaluated</span>`;
+          if (reachDesc) {
+            reachDesc.innerHTML = `<span style="color: var(--text-muted);">${d.reachability_note}</span> <a href="javascript:void(0)" onclick="toggleSourceUploadPanel()" style="display: block; margin-top: 4px; color: #2563eb; font-weight: 600; text-decoration: underline;">+ Upload Application Code (.js/.ts) to Evaluate</a>`;
+          }
+          if (noiseElem) noiseElem.innerText = `${d.noise_reduction_percent}% (Semver-only)`;
+          if (badge) {
+            badge.className = 'badge badge-neutral';
+            badge.innerText = 'Lockfile Only (AST Off)';
+          }
+        } else {
+          reachElem.innerText = `${d.reachability_gated_reach} pkgs`;
+          if (reachDesc) {
+            reachDesc.innerHTML = `<span style="color: #047857; font-weight: 500;">✓ Pruned unreferenced symbols via AST index across ${d.source_files_count || 1} source file(s).</span>`;
+          }
+          if (noiseElem) noiseElem.innerText = `${d.noise_reduction_percent}%`;
+          if (badge) {
+            badge.className = 'badge badge-pass';
+            badge.innerText = `✓ AST Active (${d.source_files_count || 1} file(s))`;
+          }
+        }
+
+        document.getElementById('sim-target-badge').innerText = `Target: ${d.target_package}@${d.target_version}`;
+
+        if (!cySimulator) {
+          initCySimulator();
+        } else {
+          cySimulator.resize();
+        }
+        animateCompromiseWave(d);
+
+      } catch (err) {
+        console.error('Simulation failed:', err);
+      } finally {
+        if (btn) btn.innerText = 'Run Propagation Simulation';
+      }
+    }
+
+    function replaySimulationWave() {
+      if (lastSimResult) {
+        animateCompromiseWave(lastSimResult);
+      }
+    }
+
+    // Animate Compromise Wave in Cytoscape
+    function animateCompromiseWave(simData) {
+      if (!cySimulator) return;
+
+      cySimulator.resize();
+
+      // 1. Reset all nodes & edges
+      cySimulator.elements().removeClass('compromise-target compromise-wave-1 compromise-wave-2 pruned-safe dimmed-safe edge-compromised edge-dimmed');
+
+      const targetId = simData.target_package;
+      const directDeps = simData.direct_dependents || [];
+      const affectedPkgs = simData.affected_packages || [];
+      const prunedPkgs = simData.pruned_packages || [];
+      const safePkgs = simData.safe_packages || [];
+
+      // Step 1: Target Injected (Red)
+      const targetNode = cySimulator.$id(targetId);
+      if (targetNode.length) {
+        targetNode.addClass('compromise-target');
+      }
+
+      // Dim safe nodes immediately
+      safePkgs.forEach(id => {
+        cySimulator.$id(id).addClass('dimmed-safe');
+      });
+
+      // Step 2: Animate Wave 1 (Direct Dependents - Orange)
+      setTimeout(() => {
+        directDeps.forEach(id => {
+          const n = cySimulator.$id(id);
+          if (n.length) n.addClass('compromise-wave-1');
+        });
+        if (targetNode.length) {
+          targetNode.incomers('edge').addClass('edge-compromised');
+        }
+      }, 350);
+
+      // Step 3: Animate Wave 2 (Transitive Dependents - Amber)
+      setTimeout(() => {
+        affectedPkgs.forEach(id => {
+          if (id !== targetId && !directDeps.includes(id)) {
+            const n = cySimulator.$id(id);
+            if (n.length) n.addClass('compromise-wave-2');
+          }
+        });
+        prunedPkgs.forEach(id => {
+          const n = cySimulator.$id(id);
+          if (n.length) n.addClass('pruned-safe');
+        });
+      }, 700);
+    }
+
+    // Lockfile Upload & Drag/Drop Handlers
+    function handleDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('lockfile-drop-zone');
+      if (dropZone) dropZone.classList.add('dragover');
+    }
+
+    function handleDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('lockfile-drop-zone');
+      if (dropZone) dropZone.classList.remove('dragover');
+    }
+
+    function handleFileDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropZone = document.getElementById('lockfile-drop-zone');
+      if (dropZone) dropZone.classList.remove('dragover');
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        handleFileSelected(dt.files[0]);
+      }
+    }
+
+    function handleFileInput(input) {
+      if (input.files && input.files[0]) {
+        handleFileSelected(input.files[0]);
+      }
+    }
+
+    async function handleFileSelected(file) {
+      const statusBox = document.getElementById('upload-status-box');
+      statusBox.style.display = 'block';
+      statusBox.style.background = 'var(--bg-subtle)';
+      statusBox.style.color = 'var(--text-secondary)';
+      statusBox.style.border = '1px solid var(--border-color)';
+      statusBox.innerHTML = `<strong>Reading ${file.name}...</strong>`;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const content = e.target.result;
+        await uploadLockfileContent(file.name, content);
+      };
+      reader.onerror = () => {
+        statusBox.style.background = 'var(--color-block-bg)';
+        statusBox.style.color = 'var(--color-block-text)';
+        statusBox.style.border = '1px solid var(--color-block-border)';
+        statusBox.innerHTML = `<strong>Error:</strong> Failed to read file ${file.name}`;
+      };
+      reader.readAsText(file);
+    }
+
+    async function uploadLockfileContent(filename, content) {
+      const statusBox = document.getElementById('upload-status-box');
+      statusBox.style.display = 'block';
+      statusBox.style.background = 'var(--bg-subtle)';
+      statusBox.style.color = 'var(--text-primary)';
+      statusBox.style.border = '1px solid var(--border-color)';
+      statusBox.innerHTML = `<strong>Parsing lockfile & computing Lengauer-Tarjan dominators for ${filename}...</strong>`;
+
+      try {
+        const res = await fetch('/api/upload-lockfile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: filename, content: content })
+        });
+        const d = await res.json();
+        if (!res.ok) {
+          statusBox.style.background = 'var(--color-block-bg)';
+          statusBox.style.color = 'var(--color-block-text)';
+          statusBox.style.border = '1px solid var(--color-block-border)';
+          statusBox.innerHTML = `<strong>Upload Failed:</strong> ${d.error || 'Failed to parse lockfile'}`;
+          return;
+        }
+
+        statusBox.style.background = 'var(--color-pass-bg)';
+        statusBox.style.color = 'var(--color-pass-text)';
+        statusBox.style.border = '1px solid var(--color-pass-border)';
+        statusBox.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <strong>✓ Successfully Analyzed Project: ${d.project_name}</strong>
+              <div style="font-size: 0.75rem; margin-top: 0.2rem;">
+                Parsed <strong>${d.package_count}</strong> packages, <strong>${d.edge_count}</strong> edges, <strong>${d.direct_count}</strong> direct dependencies. 
+                Computed Lengauer-Tarjan dominator tree with <strong>${d.dominator_count}</strong> immediate dominators.
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="document.querySelector('[data-tab=\\'tab-graph\\']').click()">Explore Graph &rarr;</button>
+          </div>
+        `;
+
+        // Refresh all data
+        await init();
+
+      } catch (err) {
+        statusBox.style.background = 'var(--color-block-bg)';
+        statusBox.style.color = 'var(--color-block-text)';
+        statusBox.style.border = '1px solid var(--color-block-border)';
+        statusBox.innerHTML = `<strong>Network Error:</strong> ${err.message}`;
+      }
+    }
+
+    async function loadSampleLockfile() {
+      const sample = {
+        "name": "enterprise-cloud-portal",
+        "lockfileVersion": 2,
+        "packages": {
+          "": { "dependencies": { "express": "^4.18.2", "jsonwebtoken": "^9.0.0", "axios": "^1.6.0" } },
+          "node_modules/express": { "version": "4.18.2", "dependencies": { "body-parser": "1.20.1", "cookie": "0.5.0", "accepts": "~1.3.8" } },
+          "node_modules/body-parser": { "version": "1.20.1", "dependencies": { "bytes": "3.1.2", "depd": "2.0.0" } },
+          "node_modules/bytes": { "version": "3.1.2" },
+          "node_modules/depd": { "version": "2.0.0" },
+          "node_modules/cookie": { "version": "0.5.0" },
+          "node_modules/accepts": { "version": "1.3.8" },
+          "node_modules/jsonwebtoken": { "version": "9.0.0", "dependencies": { "jws": "^3.2.2", "ms": "^2.1.3" } },
+          "node_modules/jws": { "version": "3.2.2", "dependencies": { "jwa": "^1.4.1" } },
+          "node_modules/jwa": { "version": "1.4.1", "dependencies": { "buffer-equal-constant-time": "1.0.1" } },
+          "node_modules/buffer-equal-constant-time": { "version": "1.0.1" },
+          "node_modules/ms": { "version": "2.1.3" },
+          "node_modules/axios": { "version": "1.6.0", "dependencies": { "follow-redirects": "^1.15.0" } },
+          "node_modules/follow-redirects": { "version": "1.15.0" }
+        }
+      };
+      await uploadLockfileContent("enterprise-sample-lock.json", JSON.stringify(sample, null, 2));
+    }
+
+    async function resetToSeedDemo() {
+      if (!confirm("Reset database to reference MONARCH seed corpus?")) return;
+      const statusBox = document.getElementById('upload-status-box');
+      if (statusBox) {
+        statusBox.style.display = 'block';
+        statusBox.style.background = 'var(--bg-subtle)';
+        statusBox.style.color = 'var(--text-primary)';
+        statusBox.style.border = '1px solid var(--border-color)';
+        statusBox.innerHTML = `<strong>Resetting to reference seed corpus...</strong>`;
+      }
+      try {
+        const res = await fetch('/api/reset-demo', { method: 'POST' });
+        const d = await res.json();
+        if (statusBox) {
+          statusBox.style.background = 'var(--color-pass-bg)';
+          statusBox.style.color = 'var(--color-pass-text)';
+          statusBox.style.border = '1px solid var(--color-pass-border)';
+          statusBox.innerHTML = `<strong>✓ ${d.message}</strong> (${d.package_count} packages restored)`;
+        }
+        await init();
+      } catch (err) {
+        alert("Failed to reset demo: " + err.message);
+      }
+    }
+
+    // Live npm Ingestion from Search Bars
+    async function fetchLivePackageFromBar(inputId) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const pkgName = input.value.trim().toLowerCase();
+      if (!pkgName) {
+        alert("Please enter a package name (e.g. lodash, axios, zod, react)");
+        return;
+      }
+
+      const isWatch = inputId.includes('watch');
+      const btn = document.getElementById(isWatch ? 'btn-watch-live-fetch' : 'btn-graph-live-fetch');
+      const spinner = document.getElementById(isWatch ? 'watch-fetch-spinner' : null);
+      const origText = btn ? btn.innerText : '';
+      if (btn) btn.innerText = 'Fetching...';
+      if (spinner) spinner.style.display = 'inline';
+
+      try {
+        const res = await fetch('/api/packages/live-fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ package_name: pkgName })
+        });
+        const d = await res.json();
+        if (!res.ok) {
+          alert(`Failed to fetch '${pkgName}': ${d.error || 'Package not found'}`);
+          return;
+        }
+
+        input.value = '';
+        alert(`✓ Ingested '${d.package.name}' from npm!\n• Consequence C(v): ${d.package.consequence_score}\n• Fragility F(v): ${d.package.fragility_score} (${d.package.status})\n• Calibrated Prob: ${d.package.calibrated_prob}\nAdded to active graph (${d.graph_nodes} total nodes).`);
+
+        // Refresh all view data
+        await init();
+
+        // Switch to graph explorer and focus on newly ingested node
+        document.querySelector('[data-tab="tab-graph"]').click();
+        setTimeout(() => {
+          searchAndFocusNode(pkgName);
+          inspectPackage(pkgName);
+        }, 150);
+
+      } catch (err) {
+        alert("Network error fetching package: " + err.message);
+      } finally {
+        if (btn) btn.innerText = origText;
+        if (spinner) spinner.style.display = 'none';
+      }
+    }
+
+    // Dominator Solver Execution
+    async function runSolver() {
+      const budget = parseFloat(document.getElementById('solver-budget').value) || 5.0;
+      const btn = document.getElementById('btn-run-solver');
+      if (btn) btn.innerText = 'Solving...';
+
+      try {
+        const res = await fetch('/api/solve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ budget: budget })
+        });
+        const d = await res.json();
+
+        document.getElementById('solver-results-box').style.display = 'block';
+        document.getElementById('solver-reduction-pct').innerText = `${d.percentage_eliminated}%`;
+        document.getElementById('solver-risk-details').innerText = 
+          `Eliminated ${d.eliminated_risk} / ${d.total_risk} risk units (${d.interventions ? d.interventions.length : 0} interventions)`;
+        document.getElementById('solver-cost-used').innerText = `${d.cost_used} / ${budget}`;
+
+        const tbody = document.getElementById('interventions-tbody');
+        const container = document.getElementById('interventions-container');
+
+        if (!d.interventions || !d.interventions.length) {
+          if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">No interventions required within budget constraint.</td></tr>';
+          }
+          if (container) {
+            container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.8125rem;">No interventions required within budget constraint.</div>';
+          }
+          return;
+        }
+
+        const rowsHtml = d.interventions.map((item, idx) => {
+          const action = item.action || 'UPGRADE';
+          const targetDep = item.target_dependency || item.target_direct_dep || item.target_package || 'direct-dep';
+          const cost = item.cost !== undefined ? item.cost : 1.0;
+          const rawPackages = item.eliminated_packages || item.covered_risks || [];
+          const packagesList = Array.isArray(rawPackages) ? rawPackages : [rawPackages];
+          const packagesStr = packagesList.length ? packagesList.join(', ') : 'Direct component only';
+
+          let actionBadge = '<span class="badge badge-pass font-mono">UPGRADE</span>';
+          if (action === 'PIN') {
+            actionBadge = '<span class="badge badge-warn font-mono">PIN</span>';
+          } else if (action === 'REMOVE') {
+            actionBadge = '<span class="badge badge-block font-mono">REMOVE</span>';
+          } else if (action === 'OVERRIDE') {
+            actionBadge = '<span class="badge badge-warn font-mono">OVERRIDE</span>';
+          }
+
+          return `
+            <tr>
+              <td><strong class="font-mono">#${idx + 1}</strong></td>
+              <td>${actionBadge}</td>
+              <td><strong class="font-mono" style="color: var(--text-primary); font-size: 0.875rem;">${targetDep}</strong></td>
+              <td><span class="font-mono" style="font-weight: 600;">${cost} unit(s)</span></td>
+              <td>
+                <span style="font-size: 0.8125rem; color: var(--text-secondary);">
+                  Eliminates systemic risk in: <strong style="color: var(--text-primary);">${packagesStr}</strong>
+                </span>
+              </td>
+              <td style="text-align: right;">
+                <span class="badge badge-pass font-mono">DOMINATOR CUT</span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        if (tbody) tbody.innerHTML = rowsHtml;
+
+        if (container) {
+          container.innerHTML = d.interventions.map((item, idx) => {
+            const action = item.action || 'UPGRADE';
+            const targetDep = item.target_dependency || item.target_direct_dep || 'direct-dep';
+            const cost = item.cost !== undefined ? item.cost : 1.0;
+            const rawPackages = item.eliminated_packages || item.covered_risks || [];
+            const packagesList = Array.isArray(rawPackages) ? rawPackages : [rawPackages];
+            const packagesStr = packagesList.length ? packagesList.join(', ') : 'Direct component only';
+
+            return `
+              <div class="intervention-item">
+                <div style="background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 0.35rem 0.6rem; font-weight: 700; font-size: 0.875rem; color: var(--text-primary);">
+                  #${idx + 1}
+                </div>
+                <div style="flex: 1;">
+                  <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.25rem;">
+                    <span class="badge ${action === 'UPGRADE' ? 'badge-pass' : 'badge-warn'} font-mono">${action}</span>
+                    <strong style="font-size: 0.875rem;">${targetDep}</strong>
+                    <span class="font-mono" style="font-size: 0.75rem; color: var(--text-muted);">Cost: ${cost} unit(s)</span>
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                    ${action === 'UPGRADE' ? 'Upgrades direct dependency' : 'Pins version'} to eliminate downstream risk in dominated transitives: 
+                    <strong style="color: var(--text-primary);">${packagesStr}</strong>.
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+      } catch (err) {
+        console.error('Solver failed:', err);
+      } finally {
+        if (btn) btn.innerText = 'Solve Minimal Cut Interventions';
+      }
+    }
+
+    // Historical Incident Backtest Rendering & Interactive Engine
+    let currentThreshold = 70.0;
+    let customIncidentsList = [];
+
+    function updateThreshold(val) {
+      currentThreshold = parseFloat(val);
+      const disp = document.getElementById('bt-threshold-val');
+      if (disp) disp.innerText = `${currentThreshold.toFixed(1)}%`;
+      fetchBacktest();
+    }
+
+    function resetThreshold(val) {
+      currentThreshold = val;
+      const slider = document.getElementById('bt-threshold-slider');
+      if (slider) slider.value = val;
+      const disp = document.getElementById('bt-threshold-val');
+      if (disp) disp.innerText = `${val.toFixed(1)}%`;
+      fetchBacktest();
+    }
+
+    function toggleCustomAttackModal() {
+      const panel = document.getElementById('custom-vector-panel');
+      if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    async function fetchBacktest() {
+      try {
+        const payload = {
+          threshold: currentThreshold,
+        };
+        if (customIncidentsList.length > 0) {
+          payload.custom_incident = customIncidentsList[customIncidentsList.length - 1];
+        }
+        const res = await fetch('/api/backtest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        renderBacktest(data);
+      } catch (err) {
+        console.error('Failed to fetch backtest:', err);
+      }
+    }
+
+    async function submitCustomAttack() {
+      const incId = document.getElementById('cv-id').value.trim() || 'custom-attack';
+      const pkg = document.getElementById('cv-pkg').value.trim() || 'custom-pkg';
+      const isMalicious = document.getElementById('cv-gt').value === 'true';
+      const repoDrift = parseFloat(document.getElementById('cv-repo-drift').value) || 0;
+      const ownershipChurn = parseFloat(document.getElementById('cv-ownership-churn').value) || 0;
+      const churnDormancy = parseFloat(document.getElementById('cv-churn-dormancy').value) || 0;
+      const installHook = parseFloat(document.getElementById('cv-install-hook').value) || 0;
+      const busFactor = parseFloat(document.getElementById('cv-bus-factor').value) || 1;
+
+      const custom = {
+        incident_id: incId,
+        package: pkg,
+        version: "1.0.0-custom",
+        year: 2026,
+        mechanism: "User-injected custom attack test vector",
+        is_malicious: isMalicious,
+        features: {
+          ownership_churn: ownershipChurn,
+          churn_after_dormancy: churnDormancy,
+          new_install_hook: installHook,
+          repo_drift: repoDrift,
+          bus_factor: busFactor,
+          rapid_republish: 0.0,
+          provenance_drift: 0.0,
+          trusted_publishing: 0.0,
+        }
+      };
+
+      customIncidentsList.push(custom);
+      await fetchBacktest();
+    }
+
+    function renderBacktest(bt) {
+      if (!bt || !bt.summary) return;
+      const precVal = bt.summary.precision * 100;
+      const recVal = bt.summary.recall * 100;
+      const precElem = document.getElementById('bt-precision');
+      const recElem = document.getElementById('bt-recall');
+
+      if (precElem) {
+        precElem.innerText = `${precVal.toFixed(1)}%`;
+        precElem.style.color = precVal === 100 ? '#10b981' : (precVal >= 80 ? '#f59e0b' : '#dc2626');
+      }
+      if (recElem) {
+        recElem.innerText = `${recVal.toFixed(1)}%`;
+        recElem.style.color = recVal === 100 ? '#10b981' : (recVal >= 80 ? '#f59e0b' : '#dc2626');
+      }
+
+      const tpElem = document.getElementById('bt-tp');
+      if (tpElem) {
+        tpElem.innerText = `${bt.summary.true_positives} / FP: ${bt.summary.false_positives}`;
+      }
+      const tnElem = document.getElementById('bt-tn');
+      if (tnElem) {
+        tnElem.innerText = `${bt.summary.true_negatives} / FN: ${bt.summary.false_negatives}`;
+      }
+
+      const fpMeta = document.getElementById('bt-fp-meta');
+      if (fpMeta) {
+        fpMeta.innerText = bt.summary.false_positives > 0 ? `${bt.summary.false_positives} benign flagged as threat` : 'Zero false positives at this threshold';
+      }
+      const fnMeta = document.getElementById('bt-fn-meta');
+      if (fnMeta) {
+        fnMeta.innerText = bt.summary.false_negatives > 0 ? `${bt.summary.false_negatives} threat(s) missed (below threshold)` : 'All ground-truth attacks detected';
+      }
+
+      const thresh = bt.threshold !== undefined ? bt.threshold : currentThreshold;
+      const slider = document.getElementById('bt-threshold-slider');
+      if (slider && Number(slider.value) !== Number(thresh)) slider.value = thresh;
+      const disp = document.getElementById('bt-threshold-val');
+      if (disp) disp.innerText = `${Number(thresh).toFixed(1)}%`;
+
+      const tbody = document.getElementById('backtest-tbody');
+      if (!tbody || !bt.incidents) return;
+      tbody.innerHTML = bt.incidents.map(inc => {
+        const incidentName = inc.incident || inc.incident_id || 'Unknown';
+        const groundTruth = inc.ground_truth || (inc.actual_malicious ? 'COMPROMISED' : 'BENIGN');
+        const rawProb = inc.calibrated_p !== undefined ? inc.calibrated_p : (inc.calibrated_prob !== undefined ? inc.calibrated_prob : null);
+        const calProb = rawProb !== null ? Number(rawProb).toFixed(4) : '-';
+        const fragScore = inc.fragility_score !== undefined ? Number(inc.fragility_score).toFixed(2) : '-';
+        const outcomeStatus = inc.outcome || inc.status || 'PASS';
+        const topSignals = Array.isArray(inc.top_contributions)
+          ? inc.top_contributions.map(([k, v]) => `<code>${k}: +${Number(v).toFixed(2)}</code>`).join(' ')
+          : '-';
+
+        const isGoodOutcome = outcomeStatus === 'TRUE_POSITIVE' || outcomeStatus === 'TRUE_NEGATIVE';
+
+        const advisoryBadge = inc.advisory_url
+          ? `<a href="${inc.advisory_url}" target="_blank" style="font-size: 0.6875rem; color: #2563eb; font-family: monospace; text-decoration: underline; display: inline-flex; align-items: center; gap: 2px;">
+              ${inc.advisory_id || 'Advisory'} ↗
+            </a>`
+          : `<span style="font-size: 0.6875rem; color: var(--text-muted); font-family: monospace;">${inc.advisory_id || ''}</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div><strong>${incidentName}</strong></div>
+              <div>${advisoryBadge}</div>
+              <div style="font-size: 0.6875rem; color: var(--text-muted); margin-top: 2px;">${inc.mechanism || ''}</div>
+            </td>
+            <td><code class="font-mono">${inc.package}${inc.version ? '@' + inc.version : ''}</code></td>
+            <td><span class="badge ${groundTruth === 'COMPROMISED' ? 'badge-block' : 'badge-pass'}">${groundTruth}</span></td>
+            <td><span class="font-mono" style="font-weight: 700; ${Number(inc.fragility_score) >= thresh ? 'color: #dc2626;' : 'color: #059669;'}">${fragScore}</span></td>
+            <td><span class="font-mono">${calProb}</span></td>
+            <td style="font-size: 0.75rem;">${topSignals}</td>
+            <td><span class="badge ${isGoodOutcome ? 'badge-pass' : 'badge-block'}">${outcomeStatus}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Policy Rendering
+    function renderPolicy(pol) {
+      const tbody = document.getElementById('policy-tbody');
+      tbody.innerHTML = pol.rules.map(r => `
+        <tr>
+          <td><strong class="font-mono">${r.id}</strong></td>
+          <td><span class="badge ${r.action === 'block' ? 'badge-block' : 'badge-warn'}">${r.action.toUpperCase()}</span></td>
+          <td><span class="font-mono">${r.sla_hours ? `${r.sla_hours}h SLA` : 'Standard'}</span></td>
+          <td><code class="font-mono" style="font-size: 0.75rem; background: var(--bg-subtle); padding: 0.15rem 0.35rem; border-radius: var(--radius-sm);">${r.condition}</code></td>
+          <td style="font-size: 0.8125rem;">${r.description}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Monarch Watch Rendering
+    function renderWatch(watchList) {
+      const tbody = document.getElementById('watch-tbody');
+      tbody.innerHTML = watchList.map(w => `
+        <tr>
+          <td><strong style="color: var(--text-muted);">${w.rank}</strong></td>
+          <td><strong class="font-mono">${w.package}</strong></td>
+          <td><span class="font-mono" style="font-weight: 600; color: #2563eb;">${w.consequence_score}</span></td>
+          <td>${w.reverse_reach} packages</td>
+          <td><span class="badge badge-neutral">Tier ${w.poll_tier}</span></td>
+          <td>${w.has_install_hook ? '<span class="badge badge-block font-mono">HOOK</span>' : '<span class="badge badge-neutral font-mono">NONE</span>'}</td>
+          <td style="text-align: right;">
+            <a href="${w.sponsor_link}" target="_blank" class="btn btn-sm btn-blue">Sponsor Maintainer &rarr;</a>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function exportData(type) {
+      window.open(`/api/export/${type}`, '_blank');
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Caches & Environments
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+ENV/
+env/
+scratch/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Presentation and internal docs
+*.pdf
+MONARCH_SDD*.md
+ORIGINAL_REQUEST.md
+PROJECT_TRACKER.md
+generate_deck.py
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+*.log
